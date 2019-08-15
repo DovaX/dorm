@@ -8,3 +8,6 @@ Table functions (Create, Drop, Select and Insert) should be working fine
 
 Todo:
 Update, Delete, Group by, Order by, Where, Linking of FK, Customizable PK,...
+
+Usage:
+Fill connection details in config.ini file, then follow the structure in dorm_model.py
