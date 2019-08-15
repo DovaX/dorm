@@ -1,7 +1,7 @@
 # dorm
 Data science friendly and very simple ORM for python and SQL Server
 
-Aims: easy integration with pandas, SQL SERVER database, and exports/imports to/from excel
+Aims: easy integration with pandas, SQL SERVER database, and exports/imports to/from excel/CSV format
 
 Done:
 Table functions (Create, Drop, Select and Insert) should be working fine
