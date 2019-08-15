@@ -1,5 +1,5 @@
 """Sample model"""
-
+from dorm import *
 db1=db()
 
 table1 = Table(db1,"test",["test1","test2","test3","test4"],["int","int","int","int"])
