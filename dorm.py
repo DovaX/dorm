@@ -1,6 +1,7 @@
 """Dominik's ORM"""
 
 import pyodbc
+import pandas as pd
 
 def read_file(file):
     """Reads txt file -> list"""
@@ -43,6 +44,7 @@ class db():
             r'UID=' + self.DB_USERNAME + ';'
             r'PWD=' + self.DB_PASSWORD + ''
         )         
+        self.cursor = self.connection.cursor()
 
     def connect_locally(self):
         self.connection = pyodbc.connect(
@@ -85,7 +87,7 @@ class Table:
         query="DROP TABLE "+self.name
         self.db1.execute(query)
 
-    def insert(self,rows,batch=50):
+    def insert(self,rows,batch=50,replace_apostrophes=True):
         assert len(self.columns)==len(self.types)
         for k in range(len(rows)):
             if k%batch==0:
@@ -100,7 +102,10 @@ class Table:
             
             query+="("
             for j in range(len(rows[k])):
-                if "nvarchar" in self.types[j]:    
+                
+                if "nvarchar" in self.types[j]:  
+                    if replace_apostrophes:
+                        rows[k][j]=rows[k][j].replace("'","") 
                     query+="N'"+str(rows[k][j])+"',"
                 elif self.types[j]=="int":
                     query+=str(rows[k][j])+","
@@ -128,20 +133,26 @@ class Table:
         """Columns give the number of selected columns"""
         self.db1.cursor.execute(query)
         column_string=query.lower().split("from")[0]
+        print(column_string)
         if "*" in column_string:
             columns=len(self.columns)+1
+        elif column_string.find(",") == -1:
+            columns = 1
         else:
-            columns = len(column_string.split(","))+1
-        print(columns)
+            columns = len(column_string.split(","))
         rows = self.db1.cursor.fetchall()
         if columns==1:
             cleared_rows_list = [item[0] for item in rows]
         
+        
+        
+        
         if columns>1:
             cleared_rows_list=[]
             for row in rows: #Because of unhashable type: 'pyodbc.Row'
-                list1=[]    
+                list1=[]
                 for i in range(columns):
+                    print(row)
                     list1.append(row[i])
                 cleared_rows_list.append(list1)  
         return(cleared_rows_list)
@@ -150,3 +161,9 @@ class Table:
         list1=self.select("SELECT * FROM "+self.name)
         return(list1)
         
+    
+    
+    def export_to_xlsx(self):
+        list1=self.select_all()
+        df1=pd.DataFrame(list1,columns=["id"]+self.columns)
+        df1.to_excel("items.xlsx")
