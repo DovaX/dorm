@@ -168,7 +168,7 @@ class Table:
             query="UPDATE "+self.name+" SET "+column+"="+value
         else:
             query="UPDATE "+self.name+" SET "+column+"="+value+" WHERE "+where_statement
-        print(query)
+        #print(query)
         self.db1.cursor.execute(query)
     
     
