@@ -82,6 +82,7 @@ class Table:
             self.db1.execute(query)
         except Exception as e:
             print("Table "+self.name+" already exists:",e)
+            print("Check the specification of table columns and their types")
         
     def drop(self):
         query="DROP TABLE "+self.name
@@ -161,6 +162,14 @@ class Table:
         list1=self.select("SELECT * FROM "+self.name)
         return(list1)
         
+    
+    def update(self,column,value,where_statement=""):
+        if where_statement=="":
+            query="UPDATE "+self.name+" SET "+column+"="+value
+        else:
+            query="UPDATE "+self.name+" SET "+column+"="+value+" WHERE "+where_statement
+        
+        self.db1.cursor.execute(query)
     
     
     def export_to_xlsx(self):
