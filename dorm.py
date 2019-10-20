@@ -78,12 +78,57 @@ class db():
         return(table_dict)
         
         
-
-class Table:
-    def __init__(self,db1,name,columns=None,types=None):
+class Selectable: #Tables and results of joins
+    def __init__(self,db1,name,columns=None):  
         self.db1=db1
         self.name=name
         self.columns=columns
+    
+    def select(self,query):
+        """given SELECT query returns Python list"""
+        """Columns give the number of selected columns"""
+        self.db1.cursor.execute(query)
+        column_string=query.lower().split("from")[0]
+        if "*" in column_string:
+            columns=len(self.columns)+1
+        elif column_string.find(",") == -1:
+            columns = 1
+        else:
+            columns = len(column_string.split(","))
+        rows = self.db1.cursor.fetchall()
+        if columns==1:
+            cleared_rows_list = [item[0] for item in rows]
+        
+        if columns>1:
+            cleared_rows_list=[]
+            for row in rows: #Because of unhashable type: 'pyodbc.Row'
+                list1=[]
+                for i in range(columns):
+                    print(row)
+                    list1.append(row[i])
+                cleared_rows_list.append(list1)  
+        return(cleared_rows_list)
+     
+    def select_all(self):
+        list1=self.select("SELECT * FROM "+self.name)
+        return(list1)
+
+    
+class Joinable(Selectable):
+    def __init__(self,db1,name,columns=None):
+        super().__init__(db1,name,columns)
+    
+    def inner_join(self,joinable,column1,column2):
+        join_name=self.name+" INNER JOIN "+joinable.name+" ON "+column1+"="+column2
+        join_columns=list(set(self.columns) | set(joinable.columns))
+        new_joinable=Joinable(self.db1,join_name,join_columns)
+        return(new_joinable)
+    
+
+
+class Table(Joinable):
+    def __init__(self,db1,name,columns=None,types=None):
+        super().__init__(db1,name,columns)
         self.types=types
         
         
@@ -165,36 +210,7 @@ class Table:
         print(rows)
         self.insert(rows)
         
-    
-    def select(self,query):
-        """given SELECT query returns Python list"""
-        """Columns give the number of selected columns"""
-        self.db1.cursor.execute(query)
-        column_string=query.lower().split("from")[0]
-        if "*" in column_string:
-            columns=len(self.columns)+1
-        elif column_string.find(",") == -1:
-            columns = 1
-        else:
-            columns = len(column_string.split(","))
-        rows = self.db1.cursor.fetchall()
-        if columns==1:
-            cleared_rows_list = [item[0] for item in rows]
-        
-        if columns>1:
-            cleared_rows_list=[]
-            for row in rows: #Because of unhashable type: 'pyodbc.Row'
-                list1=[]
-                for i in range(columns):
-                    print(row)
-                    list1.append(row[i])
-                cleared_rows_list.append(list1)  
-        return(cleared_rows_list)
-     
-    def select_all(self):
-        list1=self.select("SELECT * FROM "+self.name)
-        return(list1)
-        
+            
     
     def update(self,column,value,where_statement=""):
         if where_statement=="":
@@ -210,4 +226,8 @@ class Table:
         df1=pd.DataFrame(list1,columns=["id"]+self.columns)
         df1.to_excel("items.xlsx")
         
+    
+    
+    
+
     
