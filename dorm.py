@@ -61,24 +61,64 @@ class db():
         self.cursor.execute(query)
         self.connection.commit()
         
+        
+    def get_all_tables(self):
+        sysobjects_table=Table(self, "sysobjects",["name"],["nvarchar(100)"])
+        query="select name from sysobjects where xtype='U'"
+        rows=sysobjects_table.select(query)
+        return(rows)
+
+    def generate_table_dict(self):
+        
+        tables=self.get_all_tables()
+        table_dict=dict()
+        
+        for i,table in enumerate(tables):
+            table_dict[table]=Table(self,table,columns=[],types=[])
+        
+
+        return(table_dict)
+        
+        
 
 class Table:
-    def __init__(self,db1,name,columns,types):
+    def __init__(self,db1,name,columns=None,types=None):
         self.db1=db1
         self.name=name
         self.columns=columns
         self.types=types
         
         
+    @classmethod
+    def init_all_columns(cls,db1,name):
+        temporary_table=cls(db1,name)
+        columns=temporary_table.get_all_columns()
+        types=temporary_table.get_all_types()
+        return(cls(db1,name,columns,types))
+        
+    def get_all_columns(self):
+        information_schema_table=Table(self.db1,'INFORMATION_SCHEMA.COLUMNS')
+        query="SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME  = '"+self.name+"'"
+        columns=information_schema_table.select(query)
+        return(columns)
+
+    def get_all_types(self):
+        information_schema_table=Table(self.db1,'INFORMATION_SCHEMA.COLUMNS',['DATA_TYPE'],['nvarchar(50)'])
+        query="SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME  = '"+self.name+"'"
+        types=information_schema_table.select(query)
+        return(types)
+
 
     def create(self):
+        assert len(self.columns)==len(self.types)
+        assert self.columns[0]=="id"
+        assert self.types[0]=="int"
+        query="CREATE TABLE "+self.name+"(id INT IDENTITY(1,1) NOT NULL,"
+        for i in range(1,len(self.columns)):
+            query+=self.columns[i]+" "+self.types[i]+","
+        query+="PRIMARY KEY(id))"        
+        print(query)
         try:
-            query="CREATE TABLE "+self.name+"(id INT IDENTITY(1,1) NOT NULL,"
-            assert len(self.columns)==len(self.types)
-            for i,column in enumerate(self.columns):
-                query+=self.columns[i]+" "+self.types[i]+","
-            query+="PRIMARY KEY(id))"        
-            print(query)
             self.db1.execute(query)
         except Exception as e:
             print("Table "+self.name+" already exists:",e)
@@ -93,8 +133,7 @@ class Table:
         for k in range(len(rows)):
             if k%batch==0:
                 query="INSERT INTO "+self.name+" ("
-                for i,type in enumerate(self.columns):
-                    
+                for i in range(len(1,self.columns)):
                     if i<len(rows[k]):
                         query+=self.columns[i]+","
                 if len(rows)<len(self.columns):
@@ -134,7 +173,6 @@ class Table:
         """Columns give the number of selected columns"""
         self.db1.cursor.execute(query)
         column_string=query.lower().split("from")[0]
-        print(column_string)
         if "*" in column_string:
             columns=len(self.columns)+1
         elif column_string.find(",") == -1:
@@ -144,9 +182,6 @@ class Table:
         rows = self.db1.cursor.fetchall()
         if columns==1:
             cleared_rows_list = [item[0] for item in rows]
-        
-        
-        
         
         if columns>1:
             cleared_rows_list=[]
@@ -176,3 +211,5 @@ class Table:
         list1=self.select_all()
         df1=pd.DataFrame(list1,columns=["id"]+self.columns)
         df1.to_excel("items.xlsx")
+        
+    

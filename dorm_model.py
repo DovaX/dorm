@@ -18,3 +18,25 @@ print(list1)
 
 
 table1.export_to_xlsx()
+
+
+
+
+tables=db1.get_all_tables()
+table_dict=db1.generate_table_dict()
+print(tables)
+
+
+columns=table_dict['test'].get_all_columns()
+types=table_dict['test'].get_all_types()
+print(columns,types)
+
+table_test=Table.init_all_columns(db1,"test")
+
+print(table_test.columns)
+
+
+table2 = Table(db1,"test_new",["id","test2"],["int","nvarchar(20)"])
+#table2.create()
+
+
