@@ -72,10 +72,8 @@ class db():
         
         tables=self.get_all_tables()
         table_dict=dict()
-        
         for i,table in enumerate(tables):
-            table_dict[table]=Table(self,table,columns=[],types=[])
-        
+            table_dict[table]=Table.init_all_columns(self,table)
 
         return(table_dict)
         
