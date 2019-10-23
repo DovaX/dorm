@@ -56,10 +56,13 @@ class db():
         )
         self.cursor = self.connection.cursor()
     
+    def close_connection(self):
+        self.connection.close()
     
     def execute(self,query):
         self.cursor.execute(query)
-        self.connection.commit()
+        self.cursor.commit()
+        #self.connection.commit()
         
         
     def get_all_tables(self):
