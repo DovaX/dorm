@@ -182,7 +182,7 @@ class Table(Joinable):
         for k in range(len(rows)):
             if k%batch==0:
                 query="INSERT INTO "+self.name+" ("
-                for i in range(len(1,self.columns)):
+                for i in range(1,len(self.columns)):
                     if i<len(rows[k]):
                         query+=self.columns[i]+","
                 if len(rows)<len(self.columns):
