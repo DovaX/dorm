@@ -45,6 +45,7 @@ class db():
             r'PWD=' + self.DB_PASSWORD + ''
         )         
         self.cursor = self.connection.cursor()
+        print("DB connection established")
 
     def connect_locally(self):
         self.connection = pyodbc.connect(
@@ -55,9 +56,11 @@ class db():
             #r'PWD=' + self.DB_PASSWORD + '') 
         )
         self.cursor = self.connection.cursor()
+        print("DB connection established")
     
     def close_connection(self):
         self.connection.close()
+        print("DB connection closed")
     
     def execute(self,query):
         self.cursor.execute(query)
