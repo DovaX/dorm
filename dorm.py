@@ -110,7 +110,7 @@ class Selectable: #Tables and results of joins
             for row in rows: #Because of unhashable type: 'pyodbc.Row'
                 list1=[]
                 for i in range(columns):
-                    print(row)
+                    #print(row)
                     list1.append(row[i])
                 cleared_rows_list.append(list1)  
         return(cleared_rows_list)
