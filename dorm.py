@@ -96,7 +96,7 @@ class Selectable: #Tables and results of joins
         self.db1.cursor.execute(query)
         column_string=query.lower().split("from")[0]
         if "*" in column_string:
-            columns=len(self.columns)+1
+            columns=len(self.columns)
         elif column_string.find(",") == -1:
             columns = 1
         else:
@@ -119,6 +119,11 @@ class Selectable: #Tables and results of joins
         list1=self.select("SELECT * FROM "+self.name)
         return(list1)
 
+    def select_to_df(self):
+        rows=self.select_all()
+        table_columns=self.columns
+        demands_df=pd.DataFrame(rows,columns=table_columns)
+        return(demands_df)
     
 class Joinable(Selectable):
     def __init__(self,db1,name,columns=None):
@@ -183,7 +188,7 @@ class Table(Joinable):
             if k%batch==0:
                 query="INSERT INTO "+self.name+" ("
                 for i in range(1,len(self.columns)):
-                    if i<len(rows[k]):
+                    if i<len(rows[k])+1:
                         query+=self.columns[i]+","
                 if len(rows)<len(self.columns):
                     print(len(self.columns)-len(rows),"columns were not specified")
@@ -191,12 +196,13 @@ class Table(Joinable):
             
             query+="("
             for j in range(len(rows[k])):
-                
-                if "nvarchar" in self.types[j]:  
+                #print(self.types,j, len(rows[k]),len(self.columns))
+                if "nvarchar" in self.types[j+1]: 
+                    #print(rows[k][j])
                     if replace_apostrophes:
                         rows[k][j]=rows[k][j].replace("'","") 
                     query+="N'"+str(rows[k][j])+"',"
-                elif self.types[j]=="int":
+                elif self.types[j+1]=="int":
                     query+=str(rows[k][j])+","
                 else:
                     query+=str(rows[k][j])+","
@@ -206,17 +212,14 @@ class Table(Joinable):
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
                 print(query)
-                self.db1.execute(query)
-        
+                self.db1.execute(query)        
                 
     def insert_from_df(self,df):
-        print(len(df.columns),len(self.columns))
+        #print(len(df.columns),len(self.columns))
         assert len(df.columns)==len(self.columns)
         rows=df.values.tolist()
-        print(rows)
+        #print(rows)
         self.insert(rows)
-        
-            
     
     def update(self,column,value,where_statement=""):
         if where_statement=="":
@@ -225,15 +228,19 @@ class Table(Joinable):
             query="UPDATE "+self.name+" SET "+column+"="+value+" WHERE "+where_statement
         #print(query)
         self.db1.cursor.execute(query)
-    
-    
+        
     def export_to_xlsx(self):
         list1=self.select_all()
         df1=pd.DataFrame(list1,columns=["id"]+self.columns)
         df1.to_excel("items.xlsx")
-        
-    
-    
-    
+            
 
-    
+        
+#dataframe - dictionary auxiliary functions     
+def df_to_dict(df,column1,column2):
+    dictionary=df.set_index(column1).to_dict()[column2]
+    return(dictionary)
+
+def dict_to_df(dictionary,column1,column2):
+    df=pd.DataFrame(list(dictionary.items()), columns=[column1, column2])
+    return(df)
