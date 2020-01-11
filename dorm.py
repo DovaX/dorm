@@ -11,7 +11,6 @@ def read_file(file):
             rows[i]=row.replace("\n","")
     return(rows)
 
-
 class db():
     def __init__(self):        
         connection_details=read_file("config.ini")
@@ -65,8 +64,7 @@ class db():
     def execute(self,query):
         self.cursor.execute(query)
         self.cursor.commit()
-        #self.connection.commit()
-        
+        #self.connection.commit()        
         
     def get_all_tables(self):
         sysobjects_table=Table(self, "sysobjects",["name"],["nvarchar(100)"])
@@ -74,8 +72,7 @@ class db():
         rows=sysobjects_table.select(query)
         return(rows)
 
-    def generate_table_dict(self):
-        
+    def generate_table_dict(self):        
         tables=self.get_all_tables()
         table_dict=dict()
         for i,table in enumerate(tables):
@@ -182,7 +179,7 @@ class Table(Joinable):
         query="DROP TABLE "+self.name
         self.db1.execute(query)
 
-    def insert(self,rows,batch=50,replace_apostrophes=True):
+    def insert(self,rows,batch=1,replace_apostrophes=True):
         assert len(self.columns)==len(self.types)
         for k in range(len(rows)):
             if k%batch==0:
@@ -196,29 +193,36 @@ class Table(Joinable):
             
             query+="("
             for j in range(len(rows[k])):
-                #print(self.types,j, len(rows[k]),len(self.columns))
-                if "nvarchar" in self.types[j+1]: 
-                    #print(rows[k][j])
+                if rows[k][j]=="NULL" or rows[k][j]==None or rows[k][j]=="None": #NaN hodnoty
+                    query+="NULL,"
+                elif "nvarchar" in self.types[j+1]:
                     if replace_apostrophes:
-                        rows[k][j]=rows[k][j].replace("'","") 
+                        rows[k][j]=str(rows[k][j]).replace("'","")
                     query+="N'"+str(rows[k][j])+"',"
                 elif self.types[j+1]=="int":
                     query+=str(rows[k][j])+","
+                elif "date" in self.types[j+1]:
+                    query+="'"+str(rows[k][j])+"',"
                 else:
                     query+=str(rows[k][j])+","
-                
+
             query=query[:-1]+"),"
-            #print(k,batch,k%batch)
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
-                print(query)
-                self.db1.execute(query)        
+                self.db1.execute(query)  
+                #try:
+                #    self.db1.execute(query)  
+                #except Exception as e:
+                #    print("Query",query,"Could not be inserted:",e)
                 
     def insert_from_df(self,df):
-        #print(len(df.columns),len(self.columns))
-        assert len(df.columns)==len(self.columns)
+        assert len(df.columns)+1==len(self.columns) #+1 because of id column
+        
+        #handling nan values -> change to NULL TODO
+        for column in list(df.columns):
+            df.loc[pd.isna(df[column]), column] = "NULL"
+        
         rows=df.values.tolist()
-        #print(rows)
         self.insert(rows)
     
     def update(self,column,value,where_statement=""):
@@ -226,16 +230,13 @@ class Table(Joinable):
             query="UPDATE "+self.name+" SET "+column+"="+value
         else:
             query="UPDATE "+self.name+" SET "+column+"="+value+" WHERE "+where_statement
-        #print(query)
         self.db1.cursor.execute(query)
         
     def export_to_xlsx(self):
         list1=self.select_all()
         df1=pd.DataFrame(list1,columns=["id"]+self.columns)
         df1.to_excel("items.xlsx")
-            
-
-        
+                   
 #dataframe - dictionary auxiliary functions     
 def df_to_dict(df,column1,column2):
     dictionary=df.set_index(column1).to_dict()[column2]
