@@ -209,11 +209,17 @@ class Table(Joinable):
             query=query[:-1]+"),"
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
-                self.db1.execute(query)  
+                self.db1.execute(query) 
+                
                 #try:
                 #    self.db1.execute(query)  
                 #except Exception as e:
+                #    file=open("log.txt","a")
                 #    print("Query",query,"Could not be inserted:",e)
+                #    file.write(str(k)+"\n")
+                #    file.close()
+                
+                
                 
     def insert_from_df(self,df):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
