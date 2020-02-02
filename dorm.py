@@ -180,6 +180,7 @@ class Table(Joinable):
         self.db1.execute(query)
 
     def insert(self,rows,batch=1,replace_apostrophes=True):
+        
         assert len(self.columns)==len(self.types)
         for k in range(len(rows)):
             if k%batch==0:
@@ -206,9 +207,10 @@ class Table(Joinable):
                 else:
                     query+=str(rows[k][j])+","
 
-            query=query[:-1]+"),"
+            query=query[:-1]+"),"            
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
+                print(query)
                 self.db1.execute(query) 
                 
                 #try:
