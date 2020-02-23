@@ -204,6 +204,8 @@ class Table(Joinable):
                     query+=str(rows[k][j])+","
                 elif "date" in self.types[j+1]:
                     query+="'"+str(rows[k][j])+"',"
+                elif "datetime" in self.types[j+1]:
+                    query+="'"+str(rows[k][j])+"',"
                 else:
                     query+=str(rows[k][j])+","
 
