@@ -2,6 +2,7 @@
 
 import pyodbc
 import pandas as pd
+import MySQLdb
 
 def read_file(file):
     """Reads txt file -> list"""
@@ -90,7 +91,7 @@ class Selectable: #Tables and results of joins
     def select(self,query):
         """given SELECT query returns Python list"""
         """Columns give the number of selected columns"""
-        self.db1.cursor.execute(query)
+        self.db1.cursor.execute(query) #??? todo: delete?
         column_string=query.lower().split("from")[0]
         if "*" in column_string:
             columns=len(self.columns)
@@ -255,3 +256,55 @@ def df_to_dict(df,column1,column2):
 def dict_to_df(dictionary,column1,column2):
     df=pd.DataFrame(list(dictionary.items()), columns=[column1, column2])
     return(df)
+    
+  
+
+class Mysqldb(db):
+    def __init__(self):
+        pass
+    def connect_locally(self):
+        self.connection = MySQLdb.connect("localhost","dominik","deribitdominik","deribit")
+        # prepare a cursor object using cursor() method
+        self.cursor = self.connection.cursor()
+        print("DB connection established")
+        
+    def close_connection(self):
+        self.connection.close()
+        print("DB connection closed")    
+    
+    def execute(self,query):
+        self.cursor.execute(query)
+
+
+
+class MysqlTable():
+    def __init__(self,db1,name):
+        self.db1=db1
+        self.name=name
+        
+    def select(self,query):
+        self.db1.execute(query)
+        
+    
+    def select_all(self):
+        list1=self.select("SELECT * FROM "+self.name)
+        return(list1)
+        
+        
+    def create(self):
+        assert len(self.columns)==len(self.types)
+        assert self.columns[0]=="id"
+        assert self.types[0]=="int"
+        query="CREATE TABLE "+self.name+"(id INT IDENTITY(1,1) NOT NULL,"
+        for i in range(1,len(self.columns)):
+            query+=self.columns[i]+" "+self.types[i]+","
+        query+="PRIMARY KEY(id))"        
+        print(query)
+        try:
+            self.db1.execute(query)
+        except Exception as e:
+            print("Table "+self.name+" already exists:",e)
+            print("Check the specification of table columns and their types")
+            
+    def drop(self):
+        pass
