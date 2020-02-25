@@ -278,9 +278,11 @@ class Mysqldb(db):
 
 
 class MysqlTable():
-    def __init__(self,db1,name):
+    def __init__(self,db1,name,columns=None,types=None):
         self.db1=db1
         self.name=name
+        self.columns=columns
+        self.types=types
         
     def select(self,query):
         self.db1.execute(query)
@@ -295,10 +297,11 @@ class MysqlTable():
         assert len(self.columns)==len(self.types)
         assert self.columns[0]=="id"
         assert self.types[0]=="int"
-        query="CREATE TABLE "+self.name+"(id INT IDENTITY(1,1) NOT NULL,"
+        query="CREATE TABLE "+self.name+"(id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
         for i in range(1,len(self.columns)):
             query+=self.columns[i]+" "+self.types[i]+","
-        query+="PRIMARY KEY(id))"        
+        query=query[:-1]
+        query+=")"        
         print(query)
         try:
             self.db1.execute(query)
@@ -307,4 +310,62 @@ class MysqlTable():
             print("Check the specification of table columns and their types")
             
     def drop(self):
-        pass
+        query="DROP TABLE "+self.name
+        self.db1.execute(query)
+    
+    def insert(self,rows,batch=1,replace_apostrophes=True):
+        
+        assert len(self.columns)==len(self.types)
+        for k in range(len(rows)):
+            if k%batch==0:
+                query="INSERT INTO "+self.name+" ("
+                for i in range(1,len(self.columns)):
+                    if i<len(rows[k])+1:
+                        query+=self.columns[i]+","
+                if len(rows)<len(self.columns):
+                    print(len(self.columns)-len(rows),"columns were not specified")
+                query=query[:-1]+") VALUES "
+            
+            query+="("
+            for j in range(len(rows[k])):
+                if rows[k][j]=="NULL" or rows[k][j]==None or rows[k][j]=="None": #NaN hodnoty
+                    query+="NULL,"
+                elif "nvarchar" in self.types[j+1]:
+                    if replace_apostrophes:
+                        rows[k][j]=str(rows[k][j]).replace("'","")
+                    query+="N'"+str(rows[k][j])+"',"
+                elif self.types[j+1]=="int":
+                    query+=str(rows[k][j])+","
+                elif "date" in self.types[j+1]:
+                    query+="'"+str(rows[k][j])+"',"
+                elif "datetime" in self.types[j+1]:
+                    query+="'"+str(rows[k][j])+"',"
+                else:
+                    query+=str(rows[k][j])+","
+
+            query=query[:-1]+"),"            
+            if k%batch==batch-1 or k==len(rows)-1:
+                query=query[:-1]
+                print(query)
+                self.db1.execute(query) 
+                
+                #try:
+                #    self.db1.execute(query)  
+                #except Exception as e:
+                #    file=open("log.txt","a")
+                #    print("Query",query,"Could not be inserted:",e)
+                #    file.write(str(k)+"\n")
+                #    file.close()
+                
+                
+                
+    def insert_from_df(self,df):
+        assert len(df.columns)+1==len(self.columns) #+1 because of id column
+        
+        #handling nan values -> change to NULL TODO
+        for column in list(df.columns):
+            df.loc[pd.isna(df[column]), column] = "NULL"
+        
+        rows=df.values.tolist()
+        self.insert(rows)
+
