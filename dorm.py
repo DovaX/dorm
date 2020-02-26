@@ -11,16 +11,20 @@ def read_file(file):
         for i,row in enumerate(rows):
             rows[i]=row.replace("\n","")
     return(rows)
+    
+def read_connection_details(config_file="config.ini"):
+    connection_details=read_file(config_file)
+    db_details={}
+    for detail in connection_details:
+        key=detail.split("=")[0]
+        value=detail.split("=")[1]
+        db_details[key]=value
+    print(connection_details)
+    return(db_details)
 
 class db():
     def __init__(self):        
-        connection_details=read_file("config.ini")
-        db_details={}
-        for detail in connection_details:
-            key=detail.split("=")[0]
-            value=detail.split("=")[1]
-            db_details[key]=value
-        print(connection_details)
+        db_details=read_connection_details()
         locally=True
         if db_details["LOCALLY"]=="False":
             locally=False
@@ -178,6 +182,7 @@ class Table(Joinable):
         
     def drop(self):
         query="DROP TABLE "+self.name
+        print(query)
         self.db1.execute(query)
 
     def insert(self,rows,batch=1,replace_apostrophes=True):
@@ -261,10 +266,26 @@ def dict_to_df(dictionary,column1,column2):
 
 class Mysqldb(db):
     def __init__(self):
-        pass
+        db_details=read_connection_details("config-mysql.ini")
+        locally=True
+        if db_details["LOCALLY"]=="False":
+            locally=False
+            
+        if locally:
+            self.DB_SERVER=db_details["DB_SERVER"]
+            self.DB_DATABASE=db_details["DB_DATABASE"]
+            self.DB_USERNAME = db_details["DB_USERNAME"]
+            self.DB_PASSWORD = db_details["DB_PASSWORD"]
+            self.connect_locally()
+        else:
+            self.DB_SERVER = db_details["DB_SERVER"]
+            self.DB_DATABASE = db_details["DB_DATABASE"]
+            self.DB_USERNAME = db_details["DB_USERNAME"]
+            self.DB_PASSWORD = db_details["DB_PASSWORD"]
+            self.connect_remotely()
+            
     def connect_locally(self):
-        self.connection = MySQLdb.connect("localhost","dominik","deribitdominik","deribit")
-        # prepare a cursor object using cursor() method
+        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
         self.cursor = self.connection.cursor()
         print("DB connection established")
         
@@ -274,8 +295,7 @@ class Mysqldb(db):
     
     def execute(self,query):
         self.cursor.execute(query)
-
-
+        self.connection.commit()
 
 class MysqlTable():
     def __init__(self,db1,name,columns=None,types=None):
@@ -284,8 +304,13 @@ class MysqlTable():
         self.columns=columns
         self.types=types
         
+
+        
     def select(self,query):
         self.db1.execute(query)
+        rows = self.db1.cursor.fetchall()
+        return(rows)
+        #self.db1.cursor.fetchall()
         
     
     def select_all(self):
@@ -311,6 +336,7 @@ class MysqlTable():
             
     def drop(self):
         query="DROP TABLE "+self.name
+        print(query)
         self.db1.execute(query)
     
     def insert(self,rows,batch=1,replace_apostrophes=True):
@@ -348,16 +374,7 @@ class MysqlTable():
                 query=query[:-1]
                 print(query)
                 self.db1.execute(query) 
-                
-                #try:
-                #    self.db1.execute(query)  
-                #except Exception as e:
-                #    file=open("log.txt","a")
-                #    print("Query",query,"Could not be inserted:",e)
-                #    file.write(str(k)+"\n")
-                #    file.close()
-                
-                
+                  
                 
     def insert_from_df(self,df):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
