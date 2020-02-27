@@ -318,13 +318,14 @@ class MysqlTable():
         return(list1)
         
         
-    def create(self):
+    def create(self,foreign_keys=None):
         assert len(self.columns)==len(self.types)
         assert self.columns[0]=="id"
         assert self.types[0]=="int"
         query="CREATE TABLE "+self.name+"(id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,"
         for i in range(1,len(self.columns)):
             query+=self.columns[i]+" "+self.types[i]+","
+
         query=query[:-1]
         query+=")"        
         print(query)
@@ -386,3 +387,13 @@ class MysqlTable():
         rows=df.values.tolist()
         self.insert(rows)
 
+
+    def add_foreign_key(self,foreign_key):
+        parent_id=foreign_key['parent_id']
+        parent=foreign_key['parent']
+        query="ALTER TABLE "+self.name+" MODIFY "+parent_id+" INT UNSIGNED"            
+        print(query)
+        self.db1.execute(query)
+        query="ALTER TABLE "+self.name+" ADD FOREIGN KEY ("+parent_id+") REFERENCES "+parent+"(id)"
+        print(query)
+        self.db1.execute(query)
