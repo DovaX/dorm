@@ -304,19 +304,14 @@ class MysqlTable():
         self.columns=columns
         self.types=types
         
-
-        
     def select(self,query):
         self.db1.execute(query)
         rows = self.db1.cursor.fetchall()
         return(rows)
-        #self.db1.cursor.fetchall()
-        
     
     def select_all(self):
         list1=self.select("SELECT * FROM "+self.name)
-        return(list1)
-        
+        return(list1)       
         
     def create(self,foreign_keys=None):
         assert len(self.columns)==len(self.types)
@@ -374,8 +369,7 @@ class MysqlTable():
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
                 print(query)
-                self.db1.execute(query) 
-                  
+                self.db1.execute(query)         
                 
     def insert_from_df(self,df):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
