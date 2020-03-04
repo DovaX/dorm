@@ -185,7 +185,7 @@ class Table(Joinable):
         print(query)
         self.db1.execute(query)
 
-    def insert(self,rows,batch=1,replace_apostrophes=True):
+    def insert(self,rows,batch=1,replace_apostrophes=True,try_mode=False):
         
         assert len(self.columns)==len(self.types)
         for k in range(len(rows)):
@@ -206,6 +206,10 @@ class Table(Joinable):
                     if replace_apostrophes:
                         rows[k][j]=str(rows[k][j]).replace("'","")
                     query+="N'"+str(rows[k][j])+"',"
+                elif "varchar" in self.types[j+1]:
+                    if replace_apostrophes:
+                        rows[k][j]=str(rows[k][j]).replace("'","")
+                    query+="'"+str(rows[k][j])+"',"
                 elif self.types[j+1]=="int":
                     query+=str(rows[k][j])+","
                 elif "date" in self.types[j+1]:
@@ -219,19 +223,20 @@ class Table(Joinable):
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
                 print(query)
-                self.db1.execute(query) 
+                if not try_mode:
+                    self.db1.execute(query) 
+                else:
+                    try:
+                        self.db1.execute(query)  
+                    except Exception as e:
+                        file=open("log.txt","a")
+                        print("Query",query,"Could not be inserted:",e)
+                        file.write("Query "+str(query)+" could not be inserted:"+str(e)+"\n")
+                        file.close()
+                    
                 
-                #try:
-                #    self.db1.execute(query)  
-                #except Exception as e:
-                #    file=open("log.txt","a")
-                #    print("Query",query,"Could not be inserted:",e)
-                #    file.write(str(k)+"\n")
-                #    file.close()
                 
-                
-                
-    def insert_from_df(self,df):
+    def insert_from_df(self,df,batch=1,try_mode=False):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
         
         #handling nan values -> change to NULL TODO
@@ -239,7 +244,7 @@ class Table(Joinable):
             df.loc[pd.isna(df[column]), column] = "NULL"
         
         rows=df.values.tolist()
-        self.insert(rows)
+        self.insert(rows,batch=batch,try_mode=try_mode)
     
     def update(self,column,value,where_statement=""):
         if where_statement=="":
