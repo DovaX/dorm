@@ -241,6 +241,13 @@ class Table(Joinable):
             query = "DELETE FROM "+self.name+" WHERE "+where
         self.db1.execute(query)
                 
+    def update(self,variable_assign,where=None):
+        if where is None:
+            query = "UPDATE "+self.name+" SET "+variable_assign
+        else:
+            query = "UPDATE "+self.name+" SET "+variable_assign+" WHERE "+where
+        self.db1.execute(query)    
+    
     def insert_from_df(self,df,batch=1,try_mode=False):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
         
