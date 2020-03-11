@@ -233,8 +233,13 @@ class Table(Joinable):
                         print("Query",query,"Could not be inserted:",e)
                         file.write("Query "+str(query)+" could not be inserted:"+str(e)+"\n")
                         file.close()
-                    
-                
+                            
+    def delete(self,where=None):
+        if where is None:
+            query = "DELETE FROM "+self.name
+        else:
+            query = "DELETE FROM "+self.name+" WHERE "+where
+        self.db1.execute(query)
                 
     def insert_from_df(self,df,batch=1,try_mode=False):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
