@@ -239,6 +239,7 @@ class Table(Joinable):
             query = "DELETE FROM "+self.name
         else:
             query = "DELETE FROM "+self.name+" WHERE "+where
+        print(query)
         self.db1.execute(query)
                 
     def update(self,variable_assign,where=None):
@@ -246,6 +247,7 @@ class Table(Joinable):
             query = "UPDATE "+self.name+" SET "+variable_assign
         else:
             query = "UPDATE "+self.name+" SET "+variable_assign+" WHERE "+where
+        print(query)
         self.db1.execute(query)    
     
     def insert_from_df(self,df,batch=1,try_mode=False):
@@ -258,13 +260,6 @@ class Table(Joinable):
         rows=df.values.tolist()
         self.insert(rows,batch=batch,try_mode=try_mode)
     
-    def update(self,column,value,where_statement=""):
-        if where_statement=="":
-            query="UPDATE "+self.name+" SET "+column+"="+value
-        else:
-            query="UPDATE "+self.name+" SET "+column+"="+value+" WHERE "+where_statement
-        self.db1.cursor.execute(query)
-        
     def export_to_xlsx(self):
         list1=self.select_all()
         df1=pd.DataFrame(list1,columns=["id"]+self.columns)
