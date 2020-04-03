@@ -2,7 +2,8 @@
 
 import pyodbc
 import pandas as pd
-import MySQLdb
+import pymysql as MySQLdb
+#import MySQLdb
 
 def read_file(file):
     """Reads txt file -> list"""
@@ -19,7 +20,7 @@ def read_connection_details(config_file="config.ini"):
         key=detail.split("=")[0]
         value=detail.split("=")[1]
         db_details[key]=value
-    print(connection_details)
+    print(", ".join([db_details['DB_SERVER'],db_details['DB_DATABASE'],db_details['DB_USERNAME']]))
     return(db_details)
 
 class db():
@@ -95,7 +96,7 @@ class Selectable: #Tables and results of joins
     def select(self,query):
         """given SELECT query returns Python list"""
         """Columns give the number of selected columns"""
-        self.db1.cursor.execute(query) #??? todo: delete?
+        self.db1.cursor.execute(query)
         column_string=query.lower().split("from")[0]
         if "*" in column_string:
             columns=len(self.columns)
