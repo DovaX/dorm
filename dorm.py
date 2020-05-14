@@ -302,6 +302,11 @@ class Mysqldb(db):
         self.cursor = self.connection.cursor()
         print("DB connection established")
         
+    def connect_remotely(self):
+        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
+        self.cursor = self.connection.cursor()
+        print("DB connection established")
+        
     def close_connection(self):
         self.connection.close()
         print("DB connection closed")    
