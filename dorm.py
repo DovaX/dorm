@@ -24,11 +24,6 @@ def read_connection_details(config_file):
     return(db_details)
 
 class AbstractDB:
-    def __init__(self,config_file="config.ini"):
-        pass
-
-
-class db(AbstractDB):
     def __init__(self,config_file="config.ini"):        
         db_details=read_connection_details(config_file)
         locally=True
@@ -38,6 +33,8 @@ class db(AbstractDB):
         if locally:
             self.DB_SERVER=db_details["DB_SERVER"]
             self.DB_DATABASE=db_details["DB_DATABASE"]
+            self.DB_USERNAME = db_details["DB_USERNAME"]
+            self.DB_PASSWORD = db_details["DB_PASSWORD"]
             self.connect_locally()
         else:
             self.DB_SERVER = db_details["DB_SERVER"]
@@ -45,7 +42,9 @@ class db(AbstractDB):
             self.DB_USERNAME = db_details["DB_USERNAME"]
             self.DB_PASSWORD = db_details["DB_PASSWORD"]
             self.connect_remotely()
-             
+
+
+class db(AbstractDB):
     def connect_remotely(self):
         self.connection = pyodbc.connect(
             r'DRIVER={ODBC Driver 13 for SQL Server};'
@@ -91,26 +90,7 @@ class db(AbstractDB):
 
         return(table_dict)
         
-class Mysqldb(db):
-    def __init__(self):
-        db_details=read_connection_details("config-mysql.ini")
-        locally=True
-        if db_details["LOCALLY"]=="False":
-            locally=False
-            
-        if locally:
-            self.DB_SERVER=db_details["DB_SERVER"]
-            self.DB_DATABASE=db_details["DB_DATABASE"]
-            self.DB_USERNAME = db_details["DB_USERNAME"]
-            self.DB_PASSWORD = db_details["DB_PASSWORD"]
-            self.connect_locally()
-        else:
-            self.DB_SERVER = db_details["DB_SERVER"]
-            self.DB_DATABASE = db_details["DB_DATABASE"]
-            self.DB_USERNAME = db_details["DB_USERNAME"]
-            self.DB_PASSWORD = db_details["DB_PASSWORD"]
-            self.connect_remotely()
-            
+class Mysqldb(db):           
     def connect_locally(self):
         self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
         self.cursor = self.connection.cursor()
