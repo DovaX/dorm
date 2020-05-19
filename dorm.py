@@ -13,7 +13,7 @@ def read_file(file):
             rows[i]=row.replace("\n","")
     return(rows)
     
-def read_connection_details(config_file="config.ini"):
+def read_connection_details(config_file):
     connection_details=read_file(config_file)
     db_details={}
     for detail in connection_details:
@@ -23,9 +23,14 @@ def read_connection_details(config_file="config.ini"):
     print(", ".join([db_details['DB_SERVER'],db_details['DB_DATABASE'],db_details['DB_USERNAME']]))
     return(db_details)
 
-class db():
-    def __init__(self):        
-        db_details=read_connection_details()
+class AbstractDB:
+    def __init__(self,config_file="config.ini"):
+        pass
+
+
+class db(AbstractDB):
+    def __init__(self,config_file="config.ini"):        
+        db_details=read_connection_details(config_file)
         locally=True
         if db_details["LOCALLY"]=="False":
             locally=False
@@ -86,6 +91,48 @@ class db():
 
         return(table_dict)
         
+class Mysqldb(db):
+    def __init__(self):
+        db_details=read_connection_details("config-mysql.ini")
+        locally=True
+        if db_details["LOCALLY"]=="False":
+            locally=False
+            
+        if locally:
+            self.DB_SERVER=db_details["DB_SERVER"]
+            self.DB_DATABASE=db_details["DB_DATABASE"]
+            self.DB_USERNAME = db_details["DB_USERNAME"]
+            self.DB_PASSWORD = db_details["DB_PASSWORD"]
+            self.connect_locally()
+        else:
+            self.DB_SERVER = db_details["DB_SERVER"]
+            self.DB_DATABASE = db_details["DB_DATABASE"]
+            self.DB_USERNAME = db_details["DB_USERNAME"]
+            self.DB_PASSWORD = db_details["DB_PASSWORD"]
+            self.connect_remotely()
+            
+    def connect_locally(self):
+        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
+        self.cursor = self.connection.cursor()
+        print("DB connection established")
+        
+    def connect_remotely(self):
+        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
+        self.cursor = self.connection.cursor()
+        print("DB connection established")
+        
+    def close_connection(self):
+        self.connection.close()
+        print("DB connection closed")    
+    
+    def execute(self,query):
+        self.cursor.execute(query)
+        self.connection.commit()
+        
+        
+#Tables
+
+
         
 class Selectable: #Tables and results of joins
     def __init__(self,db1,name,columns=None):  
@@ -277,43 +324,7 @@ def dict_to_df(dictionary,column1,column2):
     
   
 
-class Mysqldb(db):
-    def __init__(self):
-        db_details=read_connection_details("config-mysql.ini")
-        locally=True
-        if db_details["LOCALLY"]=="False":
-            locally=False
-            
-        if locally:
-            self.DB_SERVER=db_details["DB_SERVER"]
-            self.DB_DATABASE=db_details["DB_DATABASE"]
-            self.DB_USERNAME = db_details["DB_USERNAME"]
-            self.DB_PASSWORD = db_details["DB_PASSWORD"]
-            self.connect_locally()
-        else:
-            self.DB_SERVER = db_details["DB_SERVER"]
-            self.DB_DATABASE = db_details["DB_DATABASE"]
-            self.DB_USERNAME = db_details["DB_USERNAME"]
-            self.DB_PASSWORD = db_details["DB_PASSWORD"]
-            self.connect_remotely()
-            
-    def connect_locally(self):
-        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
-        self.cursor = self.connection.cursor()
-        print("DB connection established")
-        
-    def connect_remotely(self):
-        self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
-        self.cursor = self.connection.cursor()
-        print("DB connection established")
-        
-    def close_connection(self):
-        self.connection.close()
-        print("DB connection closed")    
-    
-    def execute(self,query):
-        self.cursor.execute(query)
-        self.connection.commit()
+
 
 class MysqlTable():
     def __init__(self,db1,name,columns=None,types=None):
@@ -329,7 +340,7 @@ class MysqlTable():
     
     def select_all(self):
         list1=self.select("SELECT * FROM "+self.name)
-        return(list1)       
+        return(list1)
         
     def create(self,foreign_keys=None):
         assert len(self.columns)==len(self.types)
