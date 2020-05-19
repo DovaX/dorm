@@ -42,6 +42,11 @@ class AbstractDB:
             self.DB_USERNAME = db_details["DB_USERNAME"]
             self.DB_PASSWORD = db_details["DB_PASSWORD"]
             self.connect_remotely()
+            
+    def execute(self,query):
+        self.cursor.execute(query)
+        self.cursor.commit() 
+        
 
 
 class db(AbstractDB):
@@ -70,12 +75,6 @@ class db(AbstractDB):
     def close_connection(self):
         self.connection.close()
         print("DB connection closed")
-    
-    def execute(self,query):
-        self.cursor.execute(query)
-        self.cursor.commit()
-        #self.connection.commit()        
-        
     def get_all_tables(self):
         sysobjects_table=Table(self, "sysobjects",["name"],["nvarchar(100)"])
         query="select name from sysobjects where xtype='U'"
@@ -90,7 +89,7 @@ class db(AbstractDB):
 
         return(table_dict)
         
-class Mysqldb(db):           
+class Mysqldb(AbstractDB):           
     def connect_locally(self):
         self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
         self.cursor = self.connection.cursor()
@@ -105,14 +104,7 @@ class Mysqldb(db):
         self.connection.close()
         print("DB connection closed")    
     
-    def execute(self,query):
-        self.cursor.execute(query)
-        self.connection.commit()
-        
-        
 #Tables
-
-
         
 class Selectable: #Tables and results of joins
     def __init__(self,db1,name,columns=None):  
@@ -303,9 +295,6 @@ def dict_to_df(dictionary,column1,column2):
     return(df)
     
   
-
-
-
 class MysqlTable():
     def __init__(self,db1,name,columns=None,types=None):
         self.db1=db1
