@@ -47,6 +47,9 @@ class AbstractDB:
         self.cursor.execute(query)
         self.cursor.commit() 
         
+    def close_connection(self):
+        self.connection.close()
+        print("DB connection closed")  
 
 
 class db(AbstractDB):
@@ -72,9 +75,6 @@ class db(AbstractDB):
         self.cursor = self.connection.cursor()
         print("DB connection established")
     
-    def close_connection(self):
-        self.connection.close()
-        print("DB connection closed")
     def get_all_tables(self):
         sysobjects_table=Table(self, "sysobjects",["name"],["nvarchar(100)"])
         query="select name from sysobjects where xtype='U'"
@@ -99,10 +99,6 @@ class Mysqldb(AbstractDB):
         self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
         self.cursor = self.connection.cursor()
         print("DB connection established")
-        
-    def close_connection(self):
-        self.connection.close()
-        print("DB connection closed")    
     
 #Tables
         
