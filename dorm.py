@@ -99,6 +99,10 @@ class Mysqldb(AbstractDB):
         self.connection = MySQLdb.connect(self.DB_SERVER,self.DB_USERNAME,self.DB_PASSWORD,self.DB_DATABASE)
         self.cursor = self.connection.cursor()
         print("DB connection established")
+        
+    def execute(self,query):
+        self.cursor.execute(query)
+        self.connection.commit() 
     
 #Tables
         
@@ -299,6 +303,7 @@ class MysqlTable():
         self.types=types
         
     def select(self,query):
+        print(query)
         self.db1.execute(query)
         rows = self.db1.cursor.fetchall()
         return(rows)
