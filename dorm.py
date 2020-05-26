@@ -329,6 +329,15 @@ class MysqlTable():
             print("Table "+self.name+" already exists:",e)
             print("Check the specification of table columns and their types")
             
+            
+    def update(self,variable_assign,where=None):
+        if where is None:
+            query = "UPDATE "+self.name+" SET "+variable_assign
+        else:
+            query = "UPDATE "+self.name+" SET "+variable_assign+" WHERE "+where
+        print(query)
+        self.db1.execute(query)  
+            
     def drop(self):
         query="DROP TABLE "+self.name
         print(query)
