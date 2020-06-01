@@ -379,7 +379,7 @@ class MysqlTable():
                 print(query)
                 self.db1.execute(query)         
                 
-    def insert_from_df(self,df):
+    def insert_from_df(self,df,batch=1):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
         
         #handling nan values -> change to NULL TODO
@@ -387,7 +387,7 @@ class MysqlTable():
             df.loc[pd.isna(df[column]), column] = "NULL"
         
         rows=df.values.tolist()
-        self.insert(rows)
+        self.insert(rows,batch=batch)
 
 
     def add_foreign_key(self,foreign_key):
