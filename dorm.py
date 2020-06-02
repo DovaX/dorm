@@ -343,7 +343,7 @@ class MysqlTable():
         print(query)
         self.db1.execute(query)
     
-    def insert(self,rows,batch=1,replace_apostrophes=True):
+    def insert(self,rows,batch=1,replace_apostrophes=True,try_mode=False):
         
         assert len(self.columns)==len(self.types)
         for k in range(len(rows)):
@@ -377,7 +377,16 @@ class MysqlTable():
             if k%batch==batch-1 or k==len(rows)-1:
                 query=query[:-1]
                 print(query)
-                self.db1.execute(query)         
+                if not try_mode:
+                    self.db1.execute(query) 
+                else:
+                    try:
+                        self.db1.execute(query)  
+                    except Exception as e:
+                        file=open("log.txt","a")
+                        print("Query",query,"Could not be inserted:",e)
+                        file.write("Query "+str(query)+" could not be inserted:"+str(e)+"\n")
+                        file.close()
                 
     def insert_from_df(self,df,batch=1):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
