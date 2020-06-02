@@ -388,7 +388,7 @@ class MysqlTable():
                         file.write("Query "+str(query)+" could not be inserted:"+str(e)+"\n")
                         file.close()
                 
-    def insert_from_df(self,df,batch=1):
+    def insert_from_df(self,df,batch=1,try_mode=False):
         assert len(df.columns)+1==len(self.columns) #+1 because of id column
         
         #handling nan values -> change to NULL TODO
@@ -396,7 +396,7 @@ class MysqlTable():
             df.loc[pd.isna(df[column]), column] = "NULL"
         
         rows=df.values.tolist()
-        self.insert(rows,batch=batch)
+        self.insert(rows,batch=batch,try_mode=False)
 
 
     def add_foreign_key(self,foreign_key):
