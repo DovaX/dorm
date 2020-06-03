@@ -396,7 +396,7 @@ class MysqlTable():
             df.loc[pd.isna(df[column]), column] = "NULL"
         
         rows=df.values.tolist()
-        self.insert(rows,batch=batch,try_mode=False)
+        self.insert(rows,batch=batch,try_mode=try_mode)
 
 
     def add_foreign_key(self,foreign_key):
