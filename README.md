@@ -1,4 +1,6 @@
 # dorm
+Not maintained anymore - renamed to DB Hydra https://github.com/DovaX/dbhydra
+
 Data science friendly and very simple ORM for python and SQL Server
 
 Aims: easy integration with pandas, SQL SERVER database, and exports/imports to/from excel/CSV format
